@@ -5,6 +5,6 @@ import 'package:raspicam/raspicam.dart';
 void main() {
   test('raspicam', () async {
     var rpc = Raspicam();
-    await rpc.start();
+    return rpc.start();
   });
 }

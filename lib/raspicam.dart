@@ -1,42 +1,51 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:raspicam/raspicam_options.dart';
+
 class Raspicam {
-  String workingDir = '/tmp';
   bool isStarted = false;
   bool isRunning = false;
   bool takingPhoto = false;
   late Process childProcess;
   String executable = 'raspistill';
-  List<String> arguments = [
-    '--width',
-    '480',
-    '--height',
-    '480',
-    '--signal',
-    '--output',
-    'image_%04d.jpg',
-    '--preview',
-    '720,0,480,480',
-    '--hflip',
-    '--vflip',
-    '--quality',
-    '99',
-    '--encoding',
-    'jpg',
-    '--verbose',
-  ];
+  RaspicamOptions options;
 
-  Raspicam();
+  String _currentPhoto = '';
+  late DateTime _startTime;
+  late DateTime _endTime;
+  Completer _takePhotoCompleter = Completer();
+
+  Raspicam(this.options);
+
   void start() async {
     await destroyPreviousPiCameraProcesses();
-
-    childProcess = await Process.start(executable, arguments);
+    childProcess = await Process.start(executable, options());
     isStarted = true;
     attachListeners();
+    _takePhotoCompleter.complete('');
   }
 
-  void stop() {}
+  void stop() {
+    childProcess.kill();
+  }
+
+  Future<dynamic> takePhoto() {
+    if (!isRunning) {
+      throw Exception('Camera is not running.');
+    }
+
+    if (!_takePhotoCompleter.isCompleted) {
+      throw Exception('Still processing last photo.');
+    }
+
+    _takePhotoCompleter = Completer();
+
+    childProcess.kill(ProcessSignal.sigusr1);
+
+    return _takePhotoCompleter.future;
+  }
 
   Future<ProcessResult> destroyPreviousPiCameraProcesses() async {
     return Process.run('pkill', ['raspistill']);
@@ -47,14 +56,24 @@ class Raspicam {
       print(data);
       isRunning = isRunning || checkReady(data);
 
-      if (isRunning && !takingPhoto) takeSomePictures();
+      if (openingFile(data)) {
+        _currentPhoto = parseOpeningFile(data);
+      }
+      if (checkStartingCapture(data)) {
+        _startTime = DateTime.now();
+      }
+      if (checkFinishedCapture(data)) {
+        _endTime = DateTime.now();
+        print(_endTime.difference(_startTime));
+        _takePhotoCompleter.complete(_currentPhoto);
+      }
     });
-  }
 
-  void takeSomePictures() {
-    takingPhoto = true; // Will be set from stderr
-    childProcess.kill(ProcessSignal.sigusr1);
-    Future.delayed(Duration(seconds: 5), killChildProcess);
+    childProcess.exitCode.then((code) {
+      print('Got an exit code $code');
+      isRunning = false;
+      isStarted = false;
+    });
   }
 
   void killChildProcess() {
@@ -64,16 +83,20 @@ class Raspicam {
   bool checkReady(String data) {
     return data.contains('SIGUSR');
   }
-}
 
-class RaspicamOptions {
-  bool hflip = false;
-  bool vflip = false;
-  int quality = 99;
-  bool verbose = true;
-  String output = 'image_%04d.jpg';
-  String encoding = 'jpg';
-  bool signal = true;
-  bool keypress = false;
-  bool timelapse = false;
+  bool checkStartingCapture(String data) {
+    return data.contains('Starting capture');
+  }
+
+  bool checkFinishedCapture(String data) {
+    return data.contains('Finished capture');
+  }
+
+  bool openingFile(String data) {
+    return data.contains('Opening output file');
+  }
+
+  String parseOpeningFile(String data) {
+    return data.replaceAll('Opening output file', '').trim();
+  }
 }
