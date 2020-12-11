@@ -16,15 +16,18 @@ class Raspicam {
   late DateTime _startTime;
   late DateTime _endTime;
   Completer _takePhotoCompleter = Completer();
+  Completer _readyCompleter = Completer();
 
   Raspicam(this.options);
 
-  void start() async {
+  Future<dynamic> start() async {
     await destroyPreviousPiCameraProcesses();
     childProcess = await Process.start(executable, options());
+
     isStarted = true;
     attachListeners();
     _takePhotoCompleter.complete('');
+    return _readyCompleter.future;
   }
 
   void stop() {
@@ -56,6 +59,10 @@ class Raspicam {
       print(data);
       isRunning = isRunning || checkReady(data);
 
+      if (isRunning && !_readyCompleter.isCompleted) {
+        _readyCompleter.complete(childProcess);
+      }
+
       if (openingFile(data)) {
         _currentPhoto = parseOpeningFile(data);
       }
@@ -73,6 +80,10 @@ class Raspicam {
       print('Got an exit code $code');
       isRunning = false;
       isStarted = false;
+      if (!_takePhotoCompleter.isCompleted) {
+        _takePhotoCompleter
+            .completeError(Exception('Camera was killed while taking photo.'));
+      }
     });
   }
 
@@ -81,7 +92,7 @@ class Raspicam {
   }
 
   bool checkReady(String data) {
-    return data.contains('SIGUSR');
+    return data.contains('Waiting for SIGUSR');
   }
 
   bool checkStartingCapture(String data) {

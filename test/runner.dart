@@ -30,7 +30,9 @@ void runner() async {
   print(opts());
 
   var rpc = Raspicam(opts);
-  rpc.start();
+  await rpc.start();
+  var p1 = await rpc.takePhoto();
+  print('Photo 1 ${p1}');
 
   readLine().listen((line) async {
     if (line.contains('p')) {
