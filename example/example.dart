@@ -17,8 +17,6 @@ void processLine(String line) {
 
 void runner() async {
   var opts = RaspicamOptions();
-  // opts.width = 2464;
-  // opts.height = 2464;
   opts.width = 360;
   opts.height = 360;
   opts.previewHeight = 640;
@@ -32,14 +30,15 @@ void runner() async {
   var rpc = Raspicam(opts);
   await rpc.start();
   var p1 = await rpc.takePhoto();
-  print('Photo 1 ${p1}');
+  print('Took a photo ${p1}');
 
+  print('Press p to take more photos, anything else to exit.');
   readLine().listen((line) async {
     if (line.contains('p')) {
       var myPhoto = await rpc.takePhoto();
       print(myPhoto);
     } else {
-      rpc.killChildProcess();
+      rpc.stop();
     }
   });
 }

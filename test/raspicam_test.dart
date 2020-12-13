@@ -9,7 +9,7 @@ void main() {
     var rpc = Raspicam(opts);
     await rpc.start();
     var myImage = await rpc.takePhoto();
-    rpc.killChildProcess();
+    rpc.stop();
     expect(myImage.contains('image'), true);
   });
 }

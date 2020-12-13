@@ -1,10 +1,8 @@
-A simple command-line application.
+A wrapper for raspistill and raspivid (todo).
 
-Created from templates made available by Stagehand under a BSD-style
-[license](https://github.com/dart-lang/stagehand/blob/master/LICENSE).
-
+Not all the cli options are implemented please PR options that you need.
 
 On ubuntu to may need to loosen the permissions of /dev/vchiq.
 ````sh
-chmod 666 /dev/vchiq
+$ chmod 666 /dev/vchiq
 ````

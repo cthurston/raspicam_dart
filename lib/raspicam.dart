@@ -66,9 +66,11 @@ class Raspicam {
       if (openingFile(data)) {
         _currentPhoto = parseOpeningFile(data);
       }
+
       if (checkStartingCapture(data)) {
         _startTime = DateTime.now();
       }
+
       if (checkFinishedCapture(data)) {
         _endTime = DateTime.now();
         print(_endTime.difference(_startTime));
@@ -85,10 +87,6 @@ class Raspicam {
             .completeError(Exception('Camera was killed while taking photo.'));
       }
     });
-  }
-
-  void killChildProcess() {
-    childProcess.kill();
   }
 
   bool checkReady(String data) {
