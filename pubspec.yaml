@@ -1,6 +1,6 @@
 name: raspicam
 description: A dart wrapper for raspistill and raspivid (todo).
-version: 1.0.0
+version: 1.0.1
 repository: 'https://github.com/cthurston/raspicam_dart'
 
 environment:

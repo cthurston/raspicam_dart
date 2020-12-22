@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:raspicam/raspicam.dart';
-import 'package:raspicam/raspicam_options.dart';
+import 'package:raspicam/src/raspicam.dart';
+import 'package:raspicam/src/raspicam_options.dart';
 
 void main() {
   runner();
