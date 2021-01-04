@@ -45,6 +45,7 @@ class Raspicam {
 
     _takePhotoCompleter = Completer();
 
+    // Does not kill the process, just signals to take photo.
     childProcess.kill(ProcessSignal.sigusr1);
 
     return _takePhotoCompleter.future;
@@ -55,7 +56,10 @@ class Raspicam {
   }
 
   void attachListeners() {
-    childProcess.stderr.transform(utf8.decoder).listen((data) {
+    childProcess.stderr
+        .transform(utf8.decoder)
+        .transform(LineSplitter())
+        .listen((data) {
       print(data);
       isRunning = isRunning || checkReady(data);
 
